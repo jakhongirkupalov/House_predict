@@ -7,27 +7,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 
-# Saqlangan modelni yuklash
-model = joblib.load("house_price_model.pkl")
-
-st.title("Uy narxini bashorat qilish")
-
-# Foydalanuvchi kiritadigan inputlar (misol uchun eng asosiy ustunlar)
-gr_liv_area = st.number_input("Yashash maydoni (GrLivArea)", min_value=100, max_value=5000, value=1500)
-overall_qual = st.number_input("Umumiy sifat (OverallQual)", min_value=1, max_value=10, value=5)
-year_built = st.number_input("Uy qurilgan yil (YearBuilt)", min_value=1800, max_value=2025, value=2000)
-
-# Model uchun dataframe yasaymiz
-input_df = pd.DataFrame({
-    "GrLivArea": [gr_liv_area],
-    "OverallQual": [overall_qual],
-    "YearBuilt": [year_built]
-})
-
-if st.button("Bashorat qilish"):
-    prediction = model.predict(input_df)
-    st.success(f"Uy narxi taxminan: ${prediction[0]:,.0f}")
-    
 # Datasetni o‘qish
 df = pd.read_csv("train.csv")
 
@@ -53,21 +32,15 @@ mse = mean_squared_error(y_test, y_pred)
 r2 = r2_score(y_test, y_pred)
 st.metric("Model aniqligi (R²)", f"{r2:.2f}")
 st.metric("O‘rtacha xatolik (MSE)", f"{mse:,.0f}")
-# Grafikni chizamiz
-fig, ax = plt.subplots(figsize=(8,6))
-ax.scatter(y_test, y_pred, alpha=0.5, label="Bashorat qilingan qiymatlar")
-ax.plot([y_test.min(), y_test.max()],
-        [y_test.min(), y_test.max()],
-        color="red", lw=2, label="Mukammal chiziq (y=x)")
+
+# Grafik: haqiqiy vs bashorat
+st.subheader("📊 Haqiqiy va Bashorat qilingan narxlar")
+fig, ax = plt.subplots()
+sns.scatterplot(x=y_test, y=y_pred, alpha=0.6, ax=ax)
 ax.set_xlabel("Haqiqiy narx")
 ax.set_ylabel("Bashorat qilingan narx")
-ax.set_title("Haqiqiy va Bashorat qilingan qiymatlar solishtirishi")
-ax.legend()
-ax.grid(True)
-
-# Streamlitda chiqaramiz
+ax.set_title("Haqiqiy vs Bashorat")
 st.pyplot(fig)
-
 
 # Foydalanuvchi kiritishi uchun inputlar
 st.subheader("🔮 Sizning uyingiz narxini taxmin qilish")
@@ -81,6 +54,32 @@ if st.button("Narxni hisoblash"):
     prediction = model.predict([[grlivarea, overallqual, yearbuilt, garagecars, totalbsmt]])[0]
     st.success(f"Taxminiy uy narxi: ${int(prediction):,}")
 
+
+
+import joblib
+
+# Saqlangan modelni yuklash
+model = joblib.load("house_price_model.pkl")
+
+st.title("Uy narxini bashorat qilish")
+
+# Foydalanuvchi kiritadigan inputlar (misol uchun eng asosiy ustunlar)
+gr_liv_area = st.number_input("Yashash maydoni (GrLivArea)", min_value=100, max_value=5000, value=1500)
+overall_qual = st.number_input("Umumiy sifat (OverallQual)", min_value=1, max_value=10, value=5)
+year_built = st.number_input("Uy qurilgan yil (YearBuilt)", min_value=1800, max_value=2025, value=2000)
+
+# Model train qilgan ustunlar: ["GrLivArea", "OverallQual", "GarageCars", "TotalBsmtSF"]
+input_df = pd.DataFrame({
+    "GrLivArea": [gr_liv_area],
+    "OverallQual": [overall_qual],
+    "GarageCars": [garagecars],
+    "TotalBsmtSF": [totalbsmt]  # Streamlit inputi bilan keladi
+})
+
+
+if st.button("Bashorat qilish"):
+    prediction = model.predict(input_df)
+    st.success(f"Uy narxi taxminan: ${prediction[0]:,.0f}")
 
 
 
